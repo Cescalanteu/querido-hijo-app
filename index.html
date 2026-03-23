@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Querido hijo: estás despedido</title>
+<meta name="description" content="App interactiva del libro 'Querido hijo: estás despedido' de Jordi Sierra i Fabra. Videos, lectura y preguntas para niños.">
+<meta property="og:title" content="Querido hijo: estás despedido">
+<meta property="og:description" content="App interactiva del libro de Jordi Sierra i Fabra con videos, lectura y preguntas.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap');
+
+  :root {
+    --primary: #FF6B35;
+    --primary-dark: #E55A2B;
+    --secondary: #004E89;
+    --accent: #FCBF49;
+    --success: #2EC4B6;
+    --danger: #E71D36;
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --text: #2D3436;
+    --text-light: #636E72;
+    --shadow: 0 8px 32px rgba(0,0,0,0.08);
+    --radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .screen { display: none; min-height: 100vh; animation: fadeIn 0.4s ease; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  @keyframes confetti { 0% { transform: translateY(0) rotate(0); opacity:1; } 100% { transform: translateY(-120px) rotate(360deg); opacity:0; } }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; border: none; border-radius: 50px;
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 16px rgba(255,107,53,0.4); }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: var(--secondary); color: #fff; box-shadow: 0 4px 16px rgba(0,78,137,0.3); }
+  .btn-success { background: var(--success); color: #fff; box-shadow: 0 4px 16px rgba(46,196,182,0.4); }
+  .btn-outline { background: transparent; border: 2px solid var(--secondary); color: var(--secondary); }
+  .btn-small { padding: 10px 20px; font-size: 15px; }
+
+  /* ===== COVER ===== */
+  #cover {
+    position: relative;
+    min-height: 100vh;
+    justify-content: flex-end;
+    align-items: center;
+    overflow: hidden;
+  }
+  .cover-bg {
+    position: absolute; inset: 0;
+    background: #1a1a2e;
+    z-index: 0;
+  }
+  .cover-bg img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .cover-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top,
+      rgba(10,10,30,0.95) 0%,
+      rgba(10,10,30,0.6) 35%,
+      rgba(10,10,30,0.1) 65%,
+      transparent 100%);
+  }
+  .cover-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 24px 60px;
+    width: 100%;
+  }
+  .cover-content h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 36px;
+    color: #fff;
+    line-height: 1.2;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.5);
+    margin-bottom: 6px;
+  }
+  .cover-content .author {
+    font-size: 17px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+    margin-bottom: 28px;
+  }
+  .cover-content .btn {
+    font-size: 20px;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--primary), #ff8c42);
+    box-shadow: 0 6px 24px rgba(255,107,53,0.5);
+  }
+
+  /* ===== PART VIEW ===== */
+  #part-view { padding: 20px 20px 40px; }
+
+  .part-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0 16px; max-width: 700px; margin: 0 auto;
+  }
+  .back-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--secondary); padding: 4px; }
+  .part-badge {
+    background: var(--primary); color: #fff; padding: 6px 16px; border-radius: 50px;
+    font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 600;
+  }
+
+  /* Progress stepper */
+  .part-stepper {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto;
+    flex-wrap: wrap;
+  }
+  .step-dot {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 700;
+    transition: all 0.3s;
+  }
+  .step-dot.clickable { cursor: pointer; }
+  .step-dot.inactive { background: #e0e0e0; color: #999; }
+  .step-dot.active { background: var(--primary); color: #fff; transform: scale(1.15); box-shadow: 0 3px 12px rgba(255,107,53,0.4); }
+  .step-dot.done { background: var(--success); color: #fff; }
+  .step-line { width: 24px; height: 3px; border-radius: 2px; transition: background 0.3s; }
+  .step-line.done { background: var(--success); }
+  .step-line.inactive { background: #e0e0e0; }
+
+  .section-card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 24px; margin-bottom: 20px; animation: slideUp 0.5s ease;
+    max-width: 700px; margin-left: auto; margin-right: auto;
+  }
+  .section-card h3 {
+    font-family: 'Fredoka', sans-serif; font-size: 22px; color: var(--secondary);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-card p { font-size: 16px; line-height: 1.7; color: var(--text); margin-bottom: 10px; }
+  .section-card p:last-child { margin-bottom: 0; }
+
+  .media-container {
+    border-radius: 16px; overflow: hidden; background: #000;
+    aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+  }
+  .media-container video { width: 100%; height: 100%; object-fit: contain; }
+
+  /* ===== QUIZ ===== */
+  .question-block {
+    padding: 20px; background: linear-gradient(135deg, #e8f4fd 0%, #f0e6ff 100%); border-radius: 20px;
+    animation: slideUp 0.4s ease; border: 2px solid rgba(0,78,137,0.1);
+  }
+  .question-block .q-text {
+    font-weight: 700; font-size: 17px; margin-bottom: 16px;
+    color: var(--secondary); line-height: 1.5; text-align: center;
+  }
+
+  /* Text-only option buttons */
+  .option-btn {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    padding: 16px 18px; margin-bottom: 12px; border: 3px solid transparent;
+    border-radius: 16px; background: #fff; font-size: 17px; font-weight: 700;
+    font-family: 'Nunito', sans-serif; cursor: pointer;
+    transition: all 0.25s ease; color: var(--text); line-height: 1.5;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    position: relative;
+  }
+  .option-btn::before {
+    content: attr(data-letter);
+    display: flex; align-items: center; justify-content: center;
+    min-width: 38px; height: 38px; border-radius: 50%;
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    color: #fff; flex-shrink: 0;
+  }
+  .option-btn:nth-child(2)  { border-color: #FFD6C2; }
+  .option-btn:nth-child(2)::before  { background: var(--primary); }
+  .option-btn:nth-child(3)  { border-color: #C2E0FF; }
+  .option-btn:nth-child(3)::before  { background: var(--secondary); }
+  .option-btn:nth-child(4)  { border-color: #D4F5E9; }
+  .option-btn:nth-child(4)::before  { background: var(--success); }
+  .option-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .option-btn:active { transform: scale(0.97); }
+
+  /* Image option buttons */
+  .option-btn.has-img {
+    flex-direction: column; align-items: stretch; text-align: center; padding: 12px;
+  }
+  .option-btn.has-img::before { align-self: flex-start; margin-bottom: 8px; }
+  .option-btn.has-img span { display: block; text-align: left; font-weight: 700; font-size: 16px; }
+  .option-btn .opt-img {
+    width: 100%; height: auto; border-radius: 12px; margin-bottom: 8px;
+    display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .option-btn.correct {
+    border-color: var(--success) !important; background: linear-gradient(135deg, #e8faf8, #d4f5e9);
+    color: #1a7a6d; font-weight: 700; pointer-events: none;
+    box-shadow: 0 4px 16px rgba(46,196,182,0.3); animation: pop 0.4s ease;
+  }
+  .option-btn.correct::after {
+    content: '\2705'; position: absolute; right: 16px; top: 16px; font-size: 22px;
+  }
+  .option-btn.wrong {
+    border-color: var(--danger) !important; background: linear-gradient(135deg, #fde8eb, #fdd);
+    color: #b71c1c; animation: shake 0.4s; pointer-events: none; opacity: 0.45;
+  }
+  .option-btn.wrong::after {
+    content: '\274C'; position: absolute; right: 16px; top: 16px; font-size: 20px;
+  }
+  .option-btn.disabled { pointer-events: none; opacity: 0.45; }
+
+  .feedback-msg {
+    padding: 14px 18px; border-radius: 16px; font-weight: 700; font-size: 16px;
+    margin-top: 12px; display: none; text-align: center;
+    font-family: 'Fredoka', sans-serif;
+  }
+  .feedback-msg.show { display: block; animation: pop 0.4s ease; }
+  .feedback-msg.correct-fb { background: linear-gradient(135deg, #d4f5e9, #e8faf8); color: #1a7a6d; border: 2px solid var(--success); }
+  .feedback-msg.wrong-fb { background: linear-gradient(135deg, #fde8eb, #fff0f0); color: #c0392b; border: 2px solid #f5c6cb; }
+
+  .part-nav {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;
+  }
+
+  /* Chapter completion */
+  .chapter-complete-card { text-align: center; animation: pop 0.5s ease; }
+  .score-circle {
+    width: 100px; height: 100px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka', sans-serif; font-size: 36px; font-weight: 700;
+    color: #fff; margin: 0 auto 16px;
+  }
+
+  .confetti-emoji { position: fixed; font-size: 30px; animation: confetti 1.2s ease forwards; pointer-events: none; z-index: 100; }
+
+  /* Progress bar at top */
+  .progress-strip {
+    max-width: 700px; margin: 0 auto 8px;
+  }
+  .progress-bar-container {
+    background: #e0e0e0; border-radius: 12px; height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--primary)); border-radius: 12px; transition: width 0.5s ease; }
+  .progress-text { text-align: center; font-size: 12px; color: var(--text-light); margin-top: 4px; margin-bottom: 12px; font-weight: 600; }
+
+  /* Loading spinner for videos */
+  .video-loading { display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--text-light); font-style: italic; }
+
+  @media (min-width: 768px) {
+    .cover-content h1 { font-size: 42px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============= COVER ============= -->
+<div id="cover" class="screen active">
+  <div class="cover-bg"><img src="imagenes/portada.jpg" alt="Portada del libro Querido hijo: estás despedido" loading="eager"></div>
+  <div class="cover-content">
+    <h1>Querido hijo:<br>estás despedido</h1>
+    <div class="author">Jordi Sierra i Fabra</div>
+    <button class="btn" onclick="startBook()">Empezar a leer</button>
+  </div>
+</div>
+
+<!-- ============= PART VIEW ============= -->
+<div id="part-view" class="screen">
+  <div class="part-top-bar">
+    <button class="back-btn" id="backBtn" onclick="goBack()">&larr;</button>
+    <div class="part-badge" id="partBadge">Parte 1</div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="progress-strip">
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+    </div>
+    <div class="progress-text" id="progressText">Parte 1 de 7</div>
+  </div>
+  <div id="partStepper" class="part-stepper"></div>
+  <div id="partContent"></div>
+</div>
+
+<script>
+// ====================================================================
+// DATA — 7 parts of the book
+// ====================================================================
+const parts = [
+  {
+    num: 1,
+    title: "La carta",
+    emoji: "\u2709\uFE0F",
+    video: "videos/video-1.mp4",
+    text: [
+      "La madre de Miguel entr\u00f3 en su cuarto abri\u00e9ndose paso entre la ropa tirada, los objetos fuera de lugar y el desorden de siempre. \u00c9l esperaba una bronca como tantas otras, pero esta vez no hubo gritos ni reproches. Ella se acerc\u00f3, le dio un sobre y le pidi\u00f3 que firmara un acuse de recibo, con una seriedad tan extra\u00f1a que lo dej\u00f3 desconcertado.",
+      "Cuando Miguel abri\u00f3 la carta, se encontr\u00f3 con algo que no pod\u00eda creer: su madre lo desped\u00eda como hijo y le daba treinta d\u00edas de plazo antes de que la decisi\u00f3n se hiciera efectiva. Mientras tanto, seguir\u00eda teniendo habitaci\u00f3n, comida y las atenciones habituales. Miguel ley\u00f3 y reley\u00f3 la hoja, convencido de que ten\u00eda que tratarse de una broma o de una exageraci\u00f3n, pero el tono del escrito no dejaba espacio para tom\u00e1rselo a la ligera."
+    ],
+    question: {
+      text: "\u00bfCu\u00e1ndo se hace efectivo el despido de Miguel?",
+      options: [
+        { letter: "A", label: "En Navidad", image: "quiz/1-opcion-a.jpg" },
+        { letter: "B", label: "En su cumplea\u00f1os", image: "quiz/1-opcion-b.jpg" },
+        { letter: "C", label: "En 30 d\u00edas", image: "quiz/1-opcion-c.jpg" }
+      ],
+      correct: 2
+    }
+  },
+  {
+    num: 2,
+    title: "La plancha",
+    emoji: "\uD83E\uDDF2",
+    video: "videos/video-2.mp4",
+    text: [
+      "Miguel sali\u00f3 de su cuarto con la carta en la mano y fue a buscar a su madre. La encontr\u00f3 en el cuarto de planchar, ocupada en su tarea, con la misma normalidad de siempre. Eso fue casi peor que la carta: ella segu\u00eda con su trabajo, como si nada extraordinario hubiese pasado, mientras \u00e9l intentaba entender por qu\u00e9 estaba leyendo que dejar\u00eda de ser su hijo.",
+      "Cuando le pregunt\u00f3 si aquello era una broma, la madre lo mir\u00f3 con una dureza que \u00e9l no le hab\u00eda visto nunca. Le dijo que no era un juego, que hab\u00eda llegado a su l\u00edmite y que ya no pensaba seguir discutiendo ni soportando lo mismo de siempre. Incluso le dijo que, si no estaba de acuerdo, pod\u00eda buscar un abogado. Miguel entendi\u00f3 entonces que el despido iba en serio y que esta vez su madre no iba a echarse atr\u00e1s."
+    ],
+    question: {
+      text: "\u00bfQu\u00e9 estaba haciendo la mam\u00e1 cuando Miguel fue a confrontarla?",
+      options: [
+        { letter: "A", label: "Cocinando la cena", image: "quiz/imagen-2-opcion-a.jpg" },
+        { letter: "B", label: "Planchando la ropa, tranquila", image: "quiz/imagen-2-opcion-b.jpg" },
+        { letter: "C", label: "Llorando en la sala", image: "quiz/imagen-2-opcion-c.jpg" }
+      ],
+      correct: 1
+    }
+  },
+  {
+    num: 3,
+    title: "El padre",
+    emoji: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66",
+    video: "videos/video-3.mp4",
+    text: [
+      "Despu\u00e9s de hablar con su madre, Miguel busc\u00f3 a su padre con la esperanza de que \u00e9l pusiera fin a todo aquello. Pens\u00f3 que, al cont\u00e1rselo, el padre lo defender\u00eda o al menos le quitar\u00eda gravedad al asunto. Pero no encontr\u00f3 ese alivio. El padre ya sab\u00eda lo que estaba pasando y no reaccion\u00f3 como alguien sorprendido, sino como alguien que llevaba tiempo viendo venir ese momento.",
+      "Ah\u00ed Miguel comprendi\u00f3 lo m\u00e1s duro: no era solo su madre la que estaba cansada. Su padre tambi\u00e9n lo estaba. Pod\u00eda llamarse neutral, pero en los hechos no iba a frenar la decisi\u00f3n. El problema ya no era un enfado pasajero de uno de los dos, sino el cansancio acumulado de ambos frente a la conducta de Miguel."
+    ],
+    question: {
+      text: "\u00bfDe qu\u00e9 se da cuenta Miguel en esta parte?",
+      options: [
+        { letter: "A", label: "Que puede convencer a su madre con regalos", image: "quiz/imagen-3-opcion-a.jpg" },
+        { letter: "B", label: "Que los dos padres est\u00e1n cansados de su comportamiento", image: "quiz/imagen-3-opcion-b.jpg" },
+        { letter: "C", label: "Que puede irse a vivir con sus abuelos", image: "quiz/imagen-3-opcion-c.jpg" }
+      ],
+      correct: 1
+    }
+  },
+  {
+    num: 4,
+    title: "El d\u00eda del despido",
+    emoji: "\uD83D\uDEAA",
+    video: "videos/video-4.mp4",
+    text: [
+      "Durante ese mes, Miguel intent\u00f3 mejorar. Por momentos se esforz\u00f3 en portarse bien, pero no logr\u00f3 sostener el cambio. Volvi\u00f3 a meter la pata, volvi\u00f3 a romper cosas y volvi\u00f3 a demostrar que no controlaba su manera de actuar. El tiempo sigui\u00f3 corriendo hasta que lleg\u00f3 la fecha fijada desde el principio.",
+      "Entonces el despido dej\u00f3 de ser una amenaza escrita y se convirti\u00f3 en un hecho. Miguel sali\u00f3 de casa y se encontr\u00f3 de verdad en la calle, lejos de la protecci\u00f3n de su cuarto, de la comida de su madre y de la seguridad de volver siempre a lo conocido. Fue all\u00ed donde empez\u00f3 a sentir el peso real de lo que estaba perdiendo y a darse cuenta de cu\u00e1nto hab\u00eda despreciado cosas que cre\u00eda seguras."
+    ],
+    question: {
+      text: "\u00bfQu\u00e9 le entrega la madre a Miguel al sacarlo de casa?",
+      options: [
+        { letter: "A", label: "Un celular", image: "quiz/imagen-4-opcion-a.jpg" },
+        { letter: "B", label: "Un libro", image: "quiz/imagen-4-opcion-b.jpg" },
+        { letter: "C", label: "Unas referencias y una maleta", image: "quiz/imagen-4-opcion-c.jpg" }
+      ],
+      correct: 2
+    }
+  },
+  {
+    num: 5,
+    title: "La polic\u00eda",
+    emoji: "\uD83D\uDC6E",
+    video: "videos/video-5.mp4",
+    text: [
+      "Una vez fuera de casa, Miguel fue buscando a quien pudiera ayudarlo. Habl\u00f3 con otras personas, intent\u00f3 encontrar una salida r\u00e1pida y termin\u00f3 acudiendo tambi\u00e9n a la polic\u00eda. En su cabeza todav\u00eda quedaba la esperanza de que alg\u00fan adulto con autoridad pusiera orden en todo aquello y lo devolviera a casa sin m\u00e1s.",
+      "Pero no ocurri\u00f3 as\u00ed. La polic\u00eda no le resolvi\u00f3 el problema ni anul\u00f3 el despido. Al contrario, ese encuentro le confirm\u00f3 que no iba a recuperar su sitio con una protesta o con un arranque de rabia. La salida ten\u00eda que ir por otro camino, uno m\u00e1s serio y m\u00e1s pensado."
+    ],
+    question: {
+      text: "\u00bfQu\u00e9 pas\u00f3 con el encuentro entre Miguel y los polic\u00edas?",
+      options: [
+        { letter: "A", label: "Los polic\u00edas arrestaron a Miguel", image: "quiz/imagen-5-opcion-a.jpg" },
+        { letter: "B", label: "Los polic\u00edas se negaron a ayudar, pues no pueden obligar a la madre a readmitirlo", image: "quiz/imagen-5-opcion-b.jpg" },
+        { letter: "C", label: "Los polic\u00edas le compraron a Miguel un helado para tranquilizarlo", image: "quiz/imagen-5-opcion-c.jpg" }
+      ],
+      correct: 1
+    }
+  },
+  {
+    num: 6,
+    title: "El se\u00f1or Jos\u00e9",
+    emoji: "\u2696\uFE0F",
+    video: "videos/video-6.mp4",
+    text: [
+      "Despu\u00e9s de dar vueltas sin encontrar una soluci\u00f3n, Miguel fue a ver al se\u00f1or Jos\u00e9, el vecino abogado. No era un extra\u00f1o ni alguien lejano, sino una persona cercana que pod\u00eda entender el asunto en el mismo terreno en que su madre lo hab\u00eda planteado. Miguel lleg\u00f3 hasta \u00e9l con la sensaci\u00f3n de que ya no le quedaban muchas m\u00e1s puertas por tocar.",
+      "El se\u00f1or Jos\u00e9 no le prometi\u00f3 milagros, pero s\u00ed le dio ayuda concreta. Lo orient\u00f3, lo tom\u00f3 en serio y lo ayud\u00f3 a escribir una instancia para pedir que lo readmitieran. Adem\u00e1s, no le cobr\u00f3. Por primera vez desde que sali\u00f3 de casa, Miguel dej\u00f3 de actuar por impulso y tuvo en las manos algo pensado para pedir perd\u00f3n y pedir una segunda oportunidad."
+    ],
+    question: {
+      text: "\u00bfQu\u00e9 hace el se\u00f1or Jos\u00e9 para ayudar a Miguel?",
+      options: [
+        { letter: "A", label: "Le presta dinero para vivir solo", image: "quiz/imagen-6-opcion-a.jpg" },
+        { letter: "B", label: "Lo ayuda a escribir una instancia para pedir que lo readmitan", image: "quiz/imagen-6-opcion-b.jpg" },
+        { letter: "C", label: "Llama a la madre para rega\u00f1arla", image: "quiz/imagen-6-opcion-c.jpg" }
+      ],
+      correct: 1
+    }
+  },
+  {
+    num: 7,
+    title: "La vuelta",
+    emoji: "\uD83C\uDFE0",
+    video: "videos/video-7.mp4",
+    text: [
+      "Con esa instancia, Miguel regres\u00f3 a su casa. Su madre ley\u00f3 el documento y enseguida not\u00f3 que detr\u00e1s de ese escrito hab\u00eda una mano experta. Lo dej\u00f3 pasar, pero no como si todo estuviera arreglado: le hizo dejar la maleta y la bolsa en el recibidor y le record\u00f3 que segu\u00eda despedido mientras ella y el padre decid\u00edan qu\u00e9 hacer. Miguel esper\u00f3 en silencio, sintiendo la casa como si ya no fuera del todo suya.",
+      "Al final, sus padres aceptaron darle otra oportunidad. El padre le dijo que esta vez hab\u00edan votado los dos y que el resultado era dos a cero a favor de que se quedara. El despido quedaba cancelado. Esa noche, ya de nuevo en su cama, Miguel entendi\u00f3 que hab\u00eda vuelto por tres cosas: la instancia bien escrita, el buen coraz\u00f3n de su madre y el voto de su padre. Solo entonces comprendi\u00f3 de verdad lo cerca que hab\u00eda estado de perderlo todo."
+    ],
+    question: {
+      text: "\u00bfQu\u00e9 pas\u00f3 cuando Miguel fue a entregar el escrito?",
+      options: [
+        { letter: "A", label: "Los padres no aceptaron su reincorporaci\u00f3n y lo rechazaron", image: "quiz/imagen-7-opcion-a.jpg" },
+        { letter: "B", label: "Sus padres aceptaron su reincorporaci\u00f3n", image: "quiz/imagen-7-opcion-b.jpg" },
+        { letter: "C", label: "Miguel no encontr\u00f3 a sus padres, pues se fueron de vacaciones", image: "quiz/imagen-7-opcion-c.jpg" }
+      ],
+      correct: 1
+    }
+  }
+];
+
+// ====================================================================
+// STATE
+// ====================================================================
+let currentPartIdx = 0;
+let completedParts = new Set();
+let partScores = {};
+
+// ====================================================================
+// NAVIGATION
+// ====================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startBook() {
+  currentPartIdx = 0;
+  renderPart(0);
+  showScreen('part-view');
+}
+
+function goBack() {
+  if (currentPartIdx > 0) {
+    currentPartIdx--;
+    renderPart(currentPartIdx);
+  } else {
+    showScreen('cover');
+  }
+}
+
+// ====================================================================
+// STEPPER
+// ====================================================================
+function renderStepper(current) {
+  const stepper = document.getElementById('partStepper');
+  stepper.innerHTML = '';
+  for (let i = 0; i < parts.length; i++) {
+    if (i > 0) {
+      const line = document.createElement('div');
+      line.className = 'step-line ' + (completedParts.has(i - 1) ? 'done' : 'inactive');
+      stepper.appendChild(line);
+    }
+    const dot = document.createElement('div');
+    dot.className = 'step-dot';
+    if (completedParts.has(i)) dot.classList.add('done');
+    else if (i === current) dot.classList.add('active');
+    else dot.classList.add('inactive');
+    dot.textContent = i + 1;
+    if (completedParts.has(i) || i === current) {
+      dot.classList.add('clickable');
+      const idx = i;
+      dot.addEventListener('click', function() { currentPartIdx = idx; renderPart(idx); });
+    }
+    stepper.appendChild(dot);
+  }
+
+  const pct = Math.round((completedParts.size / parts.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = 'Parte ' + (current + 1) + ' de ' + parts.length +
+    (completedParts.size === parts.length ? ' \u2014 \u00a1Completado!' : '');
+}
+
+// ====================================================================
+// SOUND EFFECTS
+// ====================================================================
+function playCorrectSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var notes = [523.25, 659.25, 783.99];
+    notes.forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+    });
+  } catch(e) {}
+}
+
+function playWrongSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var notes = [330, 262];
+    notes.forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+  } catch(e) {}
+}
+
+// ====================================================================
+// RENDER PART
+// ====================================================================
+function renderPart(idx) {
+  currentPartIdx = idx;
+  var part = parts[idx];
+  document.getElementById('partBadge').textContent = 'Parte ' + part.num + ': ' + part.title;
+  document.getElementById('backBtn').style.visibility = idx === 0 ? 'hidden' : 'visible';
+  renderStepper(idx);
+
+  var content = document.getElementById('partContent');
+  content.innerHTML = '';
+
+  // Title card
+  var titleCard = document.createElement('div');
+  titleCard.className = 'section-card';
+  titleCard.innerHTML = '<h3>' + part.emoji + ' Parte ' + part.num + ': ' + part.title + '</h3>';
+  content.appendChild(titleCard);
+
+  // Video
+  if (part.video) {
+    var mediaCard = document.createElement('div');
+    mediaCard.className = 'section-card';
+    mediaCard.innerHTML = '<h3>\uD83C\uDFAC Video</h3>';
+    var mediaDiv = document.createElement('div');
+    mediaDiv.className = 'media-container';
+    mediaDiv.innerHTML = '<video controls playsinline preload="metadata"><source src="' + part.video + '" type="video/mp4">Tu navegador no soporta video.</video>';
+    mediaCard.appendChild(mediaDiv);
+    content.appendChild(mediaCard);
+  }
+
+  // Text
+  var textCard = document.createElement('div');
+  textCard.className = 'section-card';
+  var textHTML = '<h3>\uD83D\uDCD6 Lectura</h3>';
+  for (var t = 0; t < part.text.length; t++) {
+    textHTML += '<p>' + part.text[t] + '</p>';
+  }
+  textCard.innerHTML = textHTML;
+  content.appendChild(textCard);
+
+  // Question
+  var qCard = document.createElement('div');
+  qCard.className = 'section-card';
+  qCard.innerHTML = '<h3>\uD83E\uDDE0 \u00a1A pensar!</h3>';
+  var block = document.createElement('div');
+  block.className = 'question-block';
+
+  var q = part.question;
+  var optHTML = '<div class="q-text">' + q.text + '</div>';
+
+  for (var oi = 0; oi < q.options.length; oi++) {
+    var opt = q.options[oi];
+    var hasImg = !!opt.image;
+    if (hasImg) {
+      optHTML += '<div class="option-btn has-img" data-o="' + oi + '" data-letter="' + opt.letter + '">' +
+        '<img class="opt-img" src="' + opt.image + '" alt="' + opt.label + '" loading="lazy">' +
+        '<span>' + opt.label + '</span></div>';
+    } else {
+      optHTML += '<button class="option-btn" data-o="' + oi + '" data-letter="' + opt.letter + '">' +
+        '<span>' + opt.label + '</span></button>';
+    }
+  }
+
+  optHTML += '<div class="feedback-msg" id="fb-part"></div>';
+  block.innerHTML = optHTML;
+  qCard.appendChild(block);
+
+  // Nav placeholder
+  var navDiv = document.createElement('div');
+  navDiv.className = 'part-nav';
+  navDiv.id = 'partNav';
+  navDiv.style.display = 'none';
+  qCard.appendChild(navDiv);
+  content.appendChild(qCard);
+
+  // Quiz event listeners
+  var attempts = 0;
+  block.querySelectorAll('.option-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var selectedIdx = parseInt(this.dataset.o);
+      var fb = document.getElementById('fb-part');
+      attempts++;
+      if (selectedIdx === q.correct) {
+        playCorrectSound();
+        block.querySelectorAll('.option-btn').forEach(function(b) { b.classList.add('disabled'); });
+        this.classList.remove('wrong');
+        this.classList.add('correct');
+        fb.className = 'feedback-msg show correct-fb';
+        fb.innerHTML = attempts === 1 ? '\uD83C\uDF1F \u00a1Excelente! \u00a1A la primera! \uD83C\uDF89' : '\uD83D\uDC4F \u00a1Muy bien! \u00a1Lo lograste! \uD83C\uDF89';
+        partScores[idx] = attempts === 1 ? 1 : 0.5;
+        completedParts.add(idx);
+        renderStepper(idx);
+        setTimeout(function() { showPartNav(idx); }, 500);
+      } else {
+        playWrongSound();
+        this.classList.add('wrong');
+        fb.className = 'feedback-msg show wrong-fb';
+        fb.innerHTML = '\uD83E\uDD14 \u00a1Casi! Intenta con otra opci\u00f3n...';
+      }
+    });
+  });
+
+  window.scrollTo(0, 0);
+}
+
+// ====================================================================
+// NAV AFTER ANSWER
+// ====================================================================
+function showPartNav(idx) {
+  var navDiv = document.getElementById('partNav');
+  navDiv.style.display = 'flex';
+  var html = '';
+
+  if (idx < parts.length - 1) {
+    html += '<button class="btn btn-primary btn-small" onclick="renderPart(' + (idx + 1) + ')">Siguiente parte \u2192</button>';
+  } else {
+    html += '<button class="btn btn-success btn-small" onclick="showFinal()">\uD83C\uDFC6 \u00a1Terminaste el libro!</button>';
+  }
+
+  if (idx > 0) {
+    html += '<button class="btn btn-outline btn-small" onclick="renderPart(' + (idx - 1) + ')">\u2190 Parte anterior</button>';
+  }
+
+  navDiv.innerHTML = html;
+  navDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ====================================================================
+// FINAL
+// ====================================================================
+function showFinal() {
+  var total = parts.length;
+  var score = 0;
+  for (var key in partScores) { score += partScores[key]; }
+  var pct = Math.round((score / total) * 100);
+
+  for (var i = 0; i < parts.length; i++) { completedParts.add(i); }
+  renderStepper(total - 1);
+
+  var color, msg;
+  if (pct >= 90) { color = 'var(--success)'; msg = '\u00a1Perfecto! Entendiste todo el libro.'; launchConfetti(); }
+  else if (pct >= 60) { color = 'var(--accent)'; msg = '\u00a1Muy bien! Buena comprensi\u00f3n del libro.'; }
+  else { color = 'var(--danger)'; msg = 'Puedes releer las partes e intentar de nuevo.'; }
+
+  var content = document.getElementById('partContent');
+  content.innerHTML =
+    '<div class="section-card chapter-complete-card">' +
+      '<div style="font-size:80px;margin-bottom:16px;">\uD83C\uDFC6\uD83D\uDCDA</div>' +
+      '<div class="score-circle" style="background:' + color + '">' + Math.round(score) + '/' + total + '</div>' +
+      '<h3 style="justify-content:center;font-family:\'Fredoka\',sans-serif;font-size:22px;color:var(--secondary);margin-bottom:8px;">' + msg + '</h3>' +
+      '<p style="margin-top:12px;font-size:18px;">' +
+        '<strong>\u201cQuerido hijo: est\u00e1s despedido\u201d</strong> nos ense\u00f1a que la casa, el cuidado y la familia no son derechos autom\u00e1ticos. Miguel aprendi\u00f3 que merecerlos requiere responsabilidad, humildad y gratitud.' +
+      '</p>' +
+      '<div class="part-nav" style="margin-top:24px;">' +
+        '<button class="btn btn-outline btn-small" onclick="resetAll()">\uD83D\uDD04 Empezar de nuevo</button>' +
+        '<button class="btn btn-secondary btn-small" onclick="showScreen(\'cover\')">\uD83D\uDCD6 Portada</button>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('partBadge').textContent = '\uD83C\uDFC6 \u00a1Felicidades!';
+  window.scrollTo(0, 0);
+}
+
+function resetAll() {
+  completedParts.clear();
+  partScores = {};
+  currentPartIdx = 0;
+  showScreen('cover');
+}
+
+function launchConfetti() {
+  var emojis = ['\uD83C\uDF89','\u2B50','\uD83C\uDF1F','\u2728','\uD83C\uDF8A','\uD83D\uDCAB'];
+  for (var i = 0; i < 12; i++) {
+    var el = document.createElement('div');
+    el.className = 'confetti-emoji';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = (Math.random() * 90 + 5) + 'vw';
+    el.style.bottom = '10vh';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    el.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+    document.body.appendChild(el);
+    setTimeout(function(e) { return function() { e.remove(); }; }(el), 2000);
+  }
+}
+</script>
+</body>
+</html>
